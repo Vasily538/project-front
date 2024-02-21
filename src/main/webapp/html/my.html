@@ -42,22 +42,15 @@
             }
         });
         //window.onload = getList;
-        function update() {
-            var select = document.getElementById('DropDown');
-            var option = select.options[select.selectedIndex];
-            var text = select.options[select.selectedIndex].text;
-        }
-
-        update();
     </script>
 </head>
 <body>
 <h1>RPG admin panel</h1>
 <h2> Accounts list:</h2>
-<select id="DropDown" size="1" multiple onChange="update()">
-    <option selected value="s3">3</option>
+<select id="DropDown" size="1" multiple>
+    <option value="s3">3</option>
     <option value="s4">4</option>
-    <option value="s5">5</option>
+    <option selected value="s5">5</option>
 </select>
 <table id="players">
     <tr>
