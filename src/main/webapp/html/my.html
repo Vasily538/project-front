@@ -1,71 +1,11 @@
 <html>
 <head>
     <title>RPG</title>
-    <meta charset="utf-8">
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
-    <script>
-        $(document).ready(function () {
-           $.ajax({
-                url: '/rest/players',         /* Куда отправить запрос */
-                method: 'get',             /* Метод запроса (post или get) */
-                dataType: 'json',
-                data: {}
-            }).done(function (data) {
-                for (var i = 0; i < data.length; i++) {
-                    var date1 = new Date(data[i].birthday)
-                    $('#players').append('<tr><td>' + data[i].id + '</td><td>' + data[i].name + '</td><td>' + data[i].title + '</td><td>' +
-                        +data[i].race + '</td><td>' + data[i].profession + '</td><td>' + data[i].level + '</td><td>' + date1.toLocaleDateString() +
-                        '</td><td>' + data[i].banned + '</td><tr>');
-                    //console.log(item);
-
-                }
-
-            });
-
-            $.ajax({
-                url: '/rest/players/count',         /* Куда отправить запрос */
-                method: 'get',             /* Метод запроса (post или get) */
-                dataType: 'json',
-                data: {}
-            }).done(function (data) {
-
-            });
-            for (var i = 6; i <= 20; i++) {
-                let option = document.createElement("option");
-                option.setAttribute('value', i.toString());
-
-                let optionText = document.createTextNode(i.toString());
-                option.appendChild(optionText);
-
-                DropDown.appendChild(option);
-            }
-        });
-        //window.onload = getList;
-    </script>
 </head>
 <body>
 <h1>RPG admin panel</h1>
-<h2> Accounts list:</h2>
-<select id="DropDown" size="1" multiple>
-    <option value="s3">3</option>
-    <option value="s4">4</option>
-    <option selected value="s5">5</option>
-</select>
-<table id="players">
-    <tr>
-        <th>#</th>
-        <th>Name</th>
-        <th>Title</th>
-        <th>Race</th>
-        <th>Profession</th>
-        <th>Level</th>
-        <th>Birthday</th>
-        <th>Banned</th>
-    </tr>
-</table>
-<div>
 
-    </div>
 </body>
 </html>
