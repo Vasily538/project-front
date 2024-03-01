@@ -1,11 +1,334 @@
 <html>
+<style>
+    body1 {
+        background-color: powderblue;
+    }
+
+    h1 {
+        color: blue;
+    }
+
+    p1 {
+        color: red;
+    }
+
+    table, td, th {
+        /* задаем границу для всех элементов */
+        border: 3px solid #245488;
+        border-collapse: collapse;
+    }
+
+    td, th {
+        /* делаем отступ в ячейках, выставляем выравнивание текста */
+        padding: 10px 20px;
+        text-align: center;
+    }
+</style>
 <head>
     <title>RPG</title>
+    <meta charSet="utf-8">
     <script src=https://code.jquery.com/jquery-3.6.0.min.js></script>
     <link href="/css/my.css" rel="stylesheet">
+    <script>
+        $(document).ready(function () {
+            showList(0, true);
+            for (var i = 6; i <= 20; i++) {
+                let option = document.createElement("option");
+                option.setAttribute('value', i.toString());
+
+                let optionText = document.createTextNode(i.toString());
+                option.appendChild(optionText);
+
+                DropDown.appendChild(option);
+            }
+
+        });
+
+        function changeDropList() {
+            showList(1, true);
+        }
+
+        function totalAccounts() {
+            var result = "";
+            $.ajax({
+                url: '/rest/players/count',         /* Куда отправить запрос */
+                method: 'get',             /* Метод запроса (post или get) */
+                dataType: 'json',
+                async: false,
+                data: {}
+            }).done(function (data) {
+                result = data;
+
+            });
+            return result;
+        }
+
+        function createButtons(count) {
+            deleteButtons();
+            const demoDiv = document.getElementById("div-container");
+            for (var i = 1; i <= count; i++) {
+                const btn = document.createElement("BUTTON");
+                btn.addEventListener("click", onClick);
+                btn.classList.add("button-class")
+                btn.setAttribute("id", "button" + i);
+                btn.setAttribute("type", "button");
+                btn.onclick = onClick;
+                btn.innerHTML = i;
+                if (i == 1) {
+                    btn.style.color = 'red';
+                }
+                demoDiv.appendChild(btn);
+            }
+        }
+
+        function showList(pageNumber, flag) {
+            clearTable();
+            let url;
+            if (pageNumber == 0) {
+                url = '/rest/players';
+            } else {
+                let e = document.getElementById("DropDown");
+                let selectedValue = parseInt(e.options[e.selectedIndex].text);
+                let pageSize = parseInt(selectedValue);
+                url = '/rest/players?pageNumber=' + pageNumber + '&pageSize=' + pageSize;
+                // alert (pageNumber);
+                // alert (pageSize);
+                // alert (url);
+            }
+            $.ajax({
+                url: url,         /* Куда отправить запрос */
+                method: 'get',             /* Метод запроса (post или get) */
+                dataType: 'json',
+                async: false,
+                data: {}
+            }).done(function (data) {
+                let img = document.createElement('img');
+                img.src = "/img/edit.png";
+                for (var i = 0; i < data.length; i++) {
+                    var date1 = new Date(data[i].birthday)
+                    $('#players').append('<tr id = rawID' + data[i].id + '><td>' + data[i].id + '</td><td>' + data[i].name + '</td><td>' + data[i].title + '</td><td>' +
+                        +data[i].race + '</td><td>' + data[i].profession + '</td><td>' + data[i].level + '</td><td>' + date1.toLocaleDateString() +
+                        '</td><td>' + data[i].banned + '</td><td accID =' + data[i].id + '>' + "<img id = editImage" + data[i].id + " accid =" + data[i].id + " src='/img/edit.png' alt='edit' width='20' height='20'onclick='editAccount(this)'>" +
+                        '</td><td>' + "<img id = deleteImage" + data[i].id + " accid =" + data[i].id + " src='/img/delete.png' alt='delete' width='20' height='20'onclick='deleteAccount(this)'>" + '</td><tr>');
+                    //console.log(item);
+                }
+                var totalAcc = totalAccounts();
+                // alert(totalAcc);
+                var e = document.getElementById("DropDown");
+                var value = e.value;
+                var selectedValue = parseInt(e.options[e.selectedIndex].text);
+                // alert(selectedValue);
+                totalPages = Math.ceil(parseInt(totalAcc) / selectedValue);
+                //alert(totalPages);
+                if (flag == true) {
+                    createButtons(totalPages);
+                }
+            });
+
+
+        }
+
+        function onClick() {
+            //showList(parseInt(pageNumber));
+            //alert(this.innerHTML);
+            this.style.color = 'red';
+            removeButtonsColor(this.id);
+            showList(parseInt(this.innerHTML), false);
+        }
+
+        function removeButtonsColor(buttonID) {
+            let buttons = document.getElementsByTagName('button');
+            for (let i = buttons.length - 1; i >= 0; i--) {
+                let button = buttons[i];
+                let btnID = button.id;
+                if (btnID != buttonID) {
+                    button.style.color = 'black';
+                }
+            }
+        }
+
+        function clearTable() {
+            let table = document.getElementById("players");
+            let count = table.rows.length;
+            for (let i = count - 1; i > 0; i--) {
+                table.deleteRow(i);
+            }
+        }
+
+        function deleteButtons() {
+            let buttons = document.getElementsByTagName('button');
+            for (let i = buttons.length - 1; i >= 0; i--) {
+                let button = buttons[i];
+                document.getElementById(button.id).remove();
+
+            }
+        }
+
+        function deleteAccount(val) {
+            const attrID = val.getAttribute("accid");
+            alert(attrID);
+            $.ajax({
+                url: '/rest/players/' + parseInt(attrID),         /* Куда отправить запрос */
+                method: 'delete',             /* Метод запроса (post или get) */
+                async: false,
+            }).done(function (data) {
+                let crntPage = currentPage();
+
+                if (crntPage != 0) {
+                    showList(crntPage, false);
+                }
+
+            });
+        }
+
+        function currentPage() {
+            let buttons = document.getElementsByClassName("button-class");
+            for (btn of buttons) {
+                if (btn.style.color == 'red') {
+                    return parseInt(btn.innerHTML);
+                }
+
+            }
+            return 0;
+        }
+
+        function editAccount(val) {
+            const attrID = val.getAttribute("accid");
+            //alert(attrID);
+            let delImg = document.getElementById("deleteImage" + attrID);
+            let editImg = document.getElementById("editImage" + attrID);
+            if (delImg.style.visibility == 'hidden') {
+                delImg.style.visibility = 'visible';
+                editImg.src = '/img/edit.png';
+                editImg.alt = 'edit';
+                saveAccount(attrID);
+            } else {
+                delImg.style.visibility = 'hidden';
+                editImg.src = '/img/save.png';
+                editImg.alt = 'save';
+                let tr = document.getElementById('rawID' + attrID);
+                tr.cells[1].contentEditable = true;
+                tr.cells[2].contentEditable = true;
+                tr.cells[3].contentEditable = true;
+                tr.cells[4].contentEditable = true;
+                tr.cells[7].contentEditable = true;
+            }
+
+        }
+
+        function saveAccount(attrID) {
+            //JSON.stringify()
+            let tr = document.getElementById('rawID' + attrID);
+            let jsonString = encodeURIComponent(JSON.stringify({
+                "name": tr.cells[1].innerHTML,
+                "title": tr.cells[2].innerHTML,
+                "race": tr.cells[3].innerHTML,
+                "profession": tr.cells[4].innerHTML,
+                "banned": tr.cells[7].innerHTML
+            }));
+            $.ajax({
+                url: '/rest/players/' + attrID + 'L',         /* Куда отправить запрос */
+                method: 'post',
+                contentType: "application/json; charset=utf-8",/* Метод запроса (post или get) */
+                dataType: 'json',
+                async: false,
+                data: jsonString
+
+            }).done(function (data) {
+                    // result = data;
+                    console.log(data);
+                }
+            );
+        }
+        function createPlayer(){
+
+        }
+
+        //window.onload = getList;
+    </script>
 </head>
 <body>
 <h1>RPG admin panel</h1>
+<h2> Accounts list:</h2>
+<div id="div-select">
+    Count per page:
+    <select id="DropDown" onchange="changeDropList()">
 
+        <option selected value="s3">3</option>
+        <option value="s4">4</option>
+        <option value="s5">5</option>
+    </select>
+</div>
+<table id="players">
+    <tr>
+        <th>#</th>
+        <th>Name</th>
+        <th>Title</th>
+        <th>Race</th>
+        <th>Profession</th>
+        <th>Level</th>
+        <th>Birthday</th>
+        <th>Banned</th>
+        <th>Edit</th>
+        <th>Delete</th>
+    </tr>
+</table>
+<div id="div-container">
+    Pages:
+</div>
+<hr>
+<div id="div-newAccount">
+    <h2> Create new account:</h2>
+    <p>
+        <label for="name">Name: </label>
+        <input type="text" id="name" name="name" required minlength="1" maxlength="12" size="10"/>
+    </p>
+    <p>
+        <label for="title">Title: </label>
+        <input type="text" id="title" name="title" required minlength="1" maxlength="30" size="10"/>
+    </p>
+    <p><label for="race">Race: </label>
+        <input list="racesList" type="text" id="race" name="race"/>
+    </p>
+    <p><label for="profession">Profession: </label>
+        <input list="professionsList" type="text" id="profession" name="profession"/>
+    </p>
+    <p>
+        <label for="level">Level: </label>
+        <input type="number" step="1" min="0" max="100" value="10" id="level" name="level"/>
+    </p>
+    <p>
+        <label for="birthday">Birthday: </label>
+        <input type="date" id="birthday" name="birthday" size="10"/>
+    </p>
+    <p>
+        <label for="banned">Banned: </label>
+        <input type="checkbox" id="banned" name="banned" size="10"/>
+    </p>
+</div>
+<p>
+    <input type="submit" value="save" onclick="createPlayer()"/>
+</p>
+
+<datalist id="racesList">
+    <option value="HUMAN"/>
+    <option value="DWARF"/>
+    <option value="ELF"/>
+    <option value="GIANT"/>
+    <option value="ORC"/>
+    <option value="TROLL"/>
+    <option value="HOBBIT"/>
+</datalist>
+
+<datalist id="professionsList">
+    <option value="WARRIOR"/>
+    <option value="ROGUE"/>
+    <option value="SORCERER"/>
+    <option value="CLERIC"/>
+    <option value="PALADIN"/>
+    <option value="NAZGUL"/>
+    <option value="WARLOCK"/>
+    <option value="DRUID"/>
+</datalist>
 </body>
 </html>
