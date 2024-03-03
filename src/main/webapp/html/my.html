@@ -1,6 +1,6 @@
 <html>
 <style>
-    body1 {
+    table {
         background-color: powderblue;
     }
 
@@ -90,11 +90,8 @@
                 let e = document.getElementById("DropDown");
                 let selectedValue = parseInt(e.options[e.selectedIndex].text);
                 let pageSize = parseInt(selectedValue);
-                url = '/rest/players?pageNumber=' + pageNumber + '&pageSize=' + pageSize;
-                // alert (pageNumber);
-                // alert (pageSize);
-                // alert (url);
-            }
+                url = '/rest/players?pageNumber=' + (pageNumber - 1) + '&pageSize=' + pageSize;
+                   }
             $.ajax({
                 url: url,         /* Куда отправить запрос */
                 method: 'get',             /* Метод запроса (post или get) */
@@ -105,10 +102,18 @@
                 let img = document.createElement('img');
                 img.src = "/img/edit.png";
                 for (var i = 0; i < data.length; i++) {
-                    var date1 = new Date(data[i].birthday)
-                    $('#players').append('<tr id = rawID' + data[i].id + '><td>' + data[i].id + '</td><td>' + data[i].name + '</td><td>' + data[i].title + '</td><td>' +
-                        +data[i].race + '</td><td>' + data[i].profession + '</td><td>' + data[i].level + '</td><td>' + date1.toLocaleDateString() +
-                        '</td><td>' + data[i].banned + '</td><td accID =' + data[i].id + '>' + "<img id = editImage" + data[i].id + " accid =" + data[i].id + " src='/img/edit.png' alt='edit' width='20' height='20'onclick='editAccount(this)'>" +
+                    var date1 = new Date(data[i].birthday);
+                    $('#players').append(
+                        '<tr id = rawID' + data[i].id + '>' +
+                        '<td>' + data[i].id + '</td><td>' +
+                        data[i].name + '</td><td>' +
+                        data[i].title + '</td><td>' +
+                        data[i].race + '</td><td>' +
+                        data[i].profession + '</td><td>' +
+                        data[i].level + '</td><td>' +
+                        date1.toLocaleDateString() + '</td><td>' +
+                        data[i].banned +
+                        '</td><td accID =' + data[i].id + '>' + "<img id = editImage" + data[i].id + " accid =" + data[i].id + " src='/img/edit.png' alt='edit' width='20' height='20'onclick='editAccount(this)'>" +
                         '</td><td>' + "<img id = deleteImage" + data[i].id + " accid =" + data[i].id + " src='/img/delete.png' alt='delete' width='20' height='20'onclick='deleteAccount(this)'>" + '</td><tr>');
                     //console.log(item);
                 }
@@ -129,8 +134,6 @@
         }
 
         function onClick() {
-            //showList(parseInt(pageNumber));
-            //alert(this.innerHTML);
             this.style.color = 'red';
             removeButtonsColor(this.id);
             showList(parseInt(this.innerHTML), false);
@@ -202,6 +205,7 @@
                 editImg.src = '/img/edit.png';
                 editImg.alt = 'edit';
                 saveAccount(attrID);
+                showList(currentPage(), false);
             } else {
                 delImg.style.visibility = 'hidden';
                 editImg.src = '/img/save.png';
@@ -209,9 +213,39 @@
                 let tr = document.getElementById('rawID' + attrID);
                 tr.cells[1].contentEditable = true;
                 tr.cells[2].contentEditable = true;
-                tr.cells[3].contentEditable = true;
-                tr.cells[4].contentEditable = true;
-                tr.cells[7].contentEditable = true;
+                // tr.cells[3].contentEditable = true;
+                // tr.cells[4].contentEditable = true;
+                let current_race = tr.cells[3].innerHTML;
+                let current_profession = tr.cells[4].innerHTML;
+                let current_banned = tr.cells[7].innerHTML;
+                tr.cells[3].innerHTML = "<select id=\"racesList\" name=\"racesList\" size=\"1\">\n" +
+                    "    <option value=\"HUMAN\">Human</option></option>\n" +
+                    "    <option value=\"DWARF\">DWARF</option>\n" +
+                    "    <option value=\"ELF\">ELF</option>\n" +
+                    "    <option value=\"GIANT\">GIANT</option>\n" +
+                    "    <option value=\"ORC\">ORC</option>\n" +
+                    "    <option value=\"TROLL\">TROLL</option>\n" +
+                    "    <option value=\"HOBBIT\">HOBBIT</option>\n" +
+                    "</select>";
+                tr.cells[4].innerHTML = "<select id=\"professionsList\" name=\"professionsList\" name=\"professionsList\" size=\"1\">\n" +
+                    "    <option value=\"WARRIOR\">WARRIOR</option></option>\n" +
+                    "    <option value=\"ROGUE\">ROGUE</option>\n" +
+                    "    <option value=\"SORCERER\">SORCERER</option>\n" +
+                    "    <option value=\"CLERIC\">CLERIC</option>\n" +
+                    "    <option value=\"PALADIN\">PALADIN</option>\n" +
+                    "    <option value=\"NAZGUL\">NAZGUL</option>\n" +
+                    "<option value=\"WARLOCK\">WARLOCK</option>\n" +
+                    "<option value=\"DRUID\">DRUID</option>\n" +
+                    "</select>";
+                tr.cells[7].innerHTML = "<select id=\"bannedList\" name=\"bannedList\" size=\"1\">\n" +
+                    "    <option value=\"true\">true</option></option>\n" +
+                    "    <option value=\"false\">false</option>\n" +
+                    "</select>";
+
+                document.getElementById('racesList').value = current_race;
+                document.getElementById('professionsList').value = current_profession;
+                document.getElementById('bannedList').value = current_banned;
+
             }
 
         }
@@ -219,29 +253,69 @@
         function saveAccount(attrID) {
             //JSON.stringify()
             let tr = document.getElementById('rawID' + attrID);
-            let jsonString = encodeURIComponent(JSON.stringify({
-                "name": tr.cells[1].innerHTML,
-                "title": tr.cells[2].innerHTML,
-                "race": tr.cells[3].innerHTML,
-                "profession": tr.cells[4].innerHTML,
-                "banned": tr.cells[7].innerHTML
-            }));
+            let race = document.getElementById('racesList').value;
+            let profession = document.getElementById('professionsList').value;
+            let banned = document.getElementById('bannedList').value;
             $.ajax({
-                url: '/rest/players/' + attrID + 'L',         /* Куда отправить запрос */
+                url: '/rest/players/' + attrID,         /* Куда отправить запрос */
                 method: 'post',
                 contentType: "application/json; charset=utf-8",/* Метод запроса (post или get) */
                 dataType: 'json',
                 async: false,
-                data: jsonString
-
+                data: JSON.stringify({
+                    "name": tr.cells[1].innerHTML,
+                    "title": tr.cells[2].innerHTML,
+                    "race": race,
+                    "profession": profession,
+                    "banned": banned
+                })
             }).done(function (data) {
                     // result = data;
                     console.log(data);
                 }
             );
         }
-        function createPlayer(){
 
+        function createPlayer() {
+            let race = document.getElementById('racesList1').value;
+            let profession = document.getElementById('professionsList1').value;
+            let banned = document.getElementById('bannedList1').value;
+            let birthday = new Date(document.getElementById('birthday1').value).getTime();
+            let level = document.getElementById('level1').value;
+            let name = document.getElementById('name1').value;
+            let title = document.getElementById('title1').value;
+            $.ajax({
+                url: '/rest/players/',         /* Куда отправить запрос */
+                method: 'post',
+                contentType: "application/json; charset=utf-8",/* Метод запроса (post или get) */
+                dataType: 'json',
+                async: false,
+                data: JSON.stringify({
+                    "name": name,
+                    "title": title,
+                    "race": race,
+                    "profession": profession,
+                    "banned": banned,
+                    "birthday": birthday,
+                    "level": level
+                })
+
+            }).done(function (data) {
+                    // result = data;
+                    console.log(data);
+                    clearInputFields();
+                    showList(currentPage(), false);
+                }
+            );
+        }
+
+        function clearInputFields() {
+            document.getElementById('name1').value = '';
+            document.getElementById('title1').value = '';
+            document.getElementById('racesList1').value = '';
+            document.getElementById('professionsList1').value = '';
+            document.getElementById('birthday1').value = '';
+            document.getElementById('bannedList1').value = '';
         }
 
         //window.onload = getList;
@@ -280,55 +354,55 @@
 <div id="div-newAccount">
     <h2> Create new account:</h2>
     <p>
-        <label for="name">Name: </label>
-        <input type="text" id="name" name="name" required minlength="1" maxlength="12" size="10"/>
+        <label for="name1">Name: </label>
+        <input type="text" id="name1" name="name1" required minlength="1" maxlength="12" size="10"/>
     </p>
     <p>
-        <label for="title">Title: </label>
-        <input type="text" id="title" name="title" required minlength="1" maxlength="30" size="10"/>
+        <label for="title1">Title: </label>
+        <input type="text" id="title1" name="title1" required minlength="1" maxlength="30" size="10"/>
     </p>
-    <p><label for="race">Race: </label>
-        <input list="racesList" type="text" id="race" name="race"/>
+    <p><label for="racesList1">Race: </label>
+        <select id='racesList1' name='racesList1' size='1'>
+            <option value='HUMAN'>Human</option>
+            <option value='DWARF'>DWARF</option>
+            <option value='ELF'>ELF</option>
+            <option value='GIANT'>GIANT</option>
+            <option value='ORC'>ORC</option>
+            <option value='TROLL'>TROLL</option>
+            <option value='HOBBIT'>HOBBIT</option>
+        </select>
     </p>
-    <p><label for="profession">Profession: </label>
-        <input list="professionsList" type="text" id="profession" name="profession"/>
+    <p><label for="professionsList1">Profession: </label>
+        <select id='professionsList1' name='professionsList1'  size='1'>
+            <option value='WARRIOR'>WARRIOR</option>
+            <option value='ROGUE'>ROGUE</option>
+            <option value='SORCERER'>SORCERER</option>
+            <option value='CLERIC'>CLERIC</option>
+            <option value='PALADIN'>PALADIN</option>
+            <option value='NAZGUL'>NAZGUL</option>
+            <option value='WARLOCK'>WARLOCK</option>
+            <option value='DRUID'>DRUID</option>
+        </select>
     </p>
     <p>
-        <label for="level">Level: </label>
-        <input type="number" step="1" min="0" max="100" value="10" id="level" name="level"/>
+        <label for="level1">Level: </label>
+        <input type="number" step="1" min="0" max="100" value="10" id="level1" name="level1"/>
     </p>
     <p>
-        <label for="birthday">Birthday: </label>
-        <input type="date" id="birthday" name="birthday" size="10"/>
+        <label for="birthday1">Birthday: </label>
+        <input type="date" id="birthday1" name="birthday1" size="10"/>
     </p>
     <p>
-        <label for="banned">Banned: </label>
-        <input type="checkbox" id="banned" name="banned" size="10"/>
+        <label for="bannedList1">Banned: </label>
+        <select id='bannedList1' name='bannedList1' size='1'>
+            <option value='true'>true</option>
+            <option value='false'>false</option>
+        </select>
     </p>
 </div>
 <p>
     <input type="submit" value="save" onclick="createPlayer()"/>
 </p>
 
-<datalist id="racesList">
-    <option value="HUMAN"/>
-    <option value="DWARF"/>
-    <option value="ELF"/>
-    <option value="GIANT"/>
-    <option value="ORC"/>
-    <option value="TROLL"/>
-    <option value="HOBBIT"/>
-</datalist>
-
-<datalist id="professionsList">
-    <option value="WARRIOR"/>
-    <option value="ROGUE"/>
-    <option value="SORCERER"/>
-    <option value="CLERIC"/>
-    <option value="PALADIN"/>
-    <option value="NAZGUL"/>
-    <option value="WARLOCK"/>
-    <option value="DRUID"/>
-</datalist>
 </body>
 </html>
